@@ -1,0 +1,192 @@
+"use client";
+import React, { useState } from "react";
+import { Sidebar, SidebarBody, SidebarLink } from "../components/sidebar";
+import {
+  IconArrowLeft,
+  IconBrandTabler,
+  IconSettings,
+  IconUserBolt,
+  IconMicrophone,
+} from "@tabler/icons-react";
+import { motion } from "motion/react";
+import { cn } from "../lib/utils";
+
+export function SidebarDemo() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { from: "bot", text: "Welcome! How can I assist you today?" },
+  ]);
+  const [input, setInput] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+
+  const messagesEndRef = React.useRef(null);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userInput = input;
+    setMessages((prev) => [...prev, { from: "user", text: userInput }]);
+    setInput("");
+
+    try {
+      const formData = new FormData();
+      formData.append("Body", userInput);
+      formData.append("From", "react-client");
+
+      const response = await fetch("http://localhost:8000/webhook", {
+        method: "POST",
+        body: formData,
+      });
+
+      const botReply = await response.text();
+
+      setMessages((prev) => [...prev, { from: "bot", text: botReply }]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setMessages((prev) => [
+        ...prev,
+        { from: "bot", text: "Sorry, something went wrong." },
+      ]);
+    }
+  };
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const links = [
+    {
+      label: "Dashboard",
+      href: "#",
+      icon: (
+        <IconBrandTabler className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "Profile",
+      href: "#",
+      icon: (
+        <IconUserBolt className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "Settings",
+      href: "#",
+      icon: (
+        <IconSettings className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "Logout",
+      href: "#",
+      icon: (
+        <IconArrowLeft className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+  ];
+
+  return (
+    <div className="flex w-full h-screen overflow-hidden bg-gray-100 dark:bg-neutral-800">
+      <Sidebar open={open} setOpen={setOpen}>
+        <SidebarBody className="justify-between gap-10">
+          <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
+            {open ? (
+              <a
+                href="#"
+                className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
+              >
+                <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="font-medium whitespace-pre text-black dark:text-white"
+                >
+                  pragyaSETU
+                </motion.span>
+              </a>
+            ) : (
+              <a
+                href="#"
+                className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
+              >
+                <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
+              </a>
+            )}
+            <div className="mt-8 flex flex-col gap-2">
+              {links.map((link, idx) => (
+                <SidebarLink key={idx} link={link} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <SidebarLink
+              link={{
+                label: "BUT_BUSTERS",
+                href: "#",
+                icon: (
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZNiigBCZuvVI36BpCZowvSDvrfwTje3Lu7A&s"
+                    className="h-7 w-7 shrink-0 rounded-full"
+                    width={50}
+                    height={50}
+                    alt="Avatar"
+                  />
+                ),
+              }}
+            />
+          </div>
+        </SidebarBody>
+      </Sidebar>
+
+      {/* Chat Interface */}
+      <div className="flex flex-1 flex-col bg-white dark:bg-neutral-900 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 p-4 md:p-10 h-full">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`max-w-xs px-4 py-2 rounded-lg ${
+                msg.from === "bot"
+                  ? "bg-gray-200 dark:bg-neutral-800 self-start"
+                  : "bg-purple-500 text-white self-end"
+              }`}
+            >
+              {msg.text}
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="flex flex-col items-center gap-3 mt-4">
+          <button
+            className="flex items-center justify-center rounded-full bg-purple-500 p-3 text-white hover:bg-purple-600"
+            onClick={() => alert("Voice input activated (placeholder)")}
+          >
+            <IconMicrophone size={24} />
+          </button>
+
+          <div className="flex items-center gap-2 justify-center w-full max-w-md">
+            <input
+              type="text"
+              className={`flex-1 rounded-md border border-neutral-300 bg-gray-50 px-4 py-2 text-black dark:border-neutral-600 dark:bg-neutral-700 dark:text-white transition-all duration-300 ${
+                isFocused ? "h-14" : "h-10"
+              }`}
+              placeholder="Type your message..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+            />
+
+            <button
+              onClick={sendMessage}
+              className="rounded-md bg-purple-500 px-4 py-2 text-white hover:bg-purple-600"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
